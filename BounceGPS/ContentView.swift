@@ -10,15 +10,26 @@ import CoreLocation
 
 struct ContentView: View {
     @State private var isMenuOpen = false
-    @State private var selectedLocation: CLLocationCoordinate2D = CLLocationCoordinate2D(latitude: 34.0454337, longitude: -118.2607808)
+    @State private var selectedLocation: CLLocationCoordinate2D = CLLocationCoordinate2D(latitude: 0.0, longitude: 0.0) // Temporary default
     @State private var pinLocked = false
-    @State private var pinCoordinates: String = "LAT 34.0454, LON -118.2607"
+    @State private var pinCoordinates: String = "Fetching location..."
 
     var body: some View {
         ZStack {
             // Map View
             MapView(selectedLocation: $selectedLocation, pinLocked: $pinLocked, pinCoordinates: $pinCoordinates)
                 .edgesIgnoringSafeArea(.all)
+                .onAppear {
+                    LocationManager.shared.centerToUserLocation { location in
+                        if let location = location {
+                            selectedLocation = location
+                            pinCoordinates = String(format: "LAT %.4f, LON %.4f", location.latitude, location.longitude)
+                            NotificationCenter.default.post(name: .centerMapOnLocation, object: location) // Notify MapView to update
+                        } else {
+                            print("Failed to fetch user location.")
+                        }
+                    }
+                }
 
             // Top Navigation Bar
             VStack {
@@ -81,7 +92,7 @@ struct ContentView: View {
                                 .foregroundColor(.blue)
                         }
                     }
-                    .padding(10)
+                    .padding(8)
                     .background(Color.gray.opacity(0.2))
                     .cornerRadius(8)
 
@@ -99,12 +110,12 @@ struct ContentView: View {
                         .padding()
                         .frame(maxWidth: .infinity)
                         .background(pinLocked ? Color.green : Color.red)
-                        .cornerRadius(10)
+                        .cornerRadius(8)
                     }
                 }
                 .padding()
                 .background(Color.white)
-                .cornerRadius(15)
+                .cornerRadius(8)
                 .shadow(radius: 5)
                 .padding()
             }

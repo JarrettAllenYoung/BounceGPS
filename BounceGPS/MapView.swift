@@ -16,27 +16,21 @@ struct MapView: UIViewRepresentable {
     func makeUIView(context: Context) -> MLNMapView {
         let mapView = MLNMapView(frame: .zero)
         mapView.styleURL = URL(string: "https://api.maptiler.com/maps/openstreetmap/style.json?key=2IXMPQAha0wjv708TjNx")
-        mapView.setCenter(selectedLocation, zoomLevel: 16, animated: false)
+        mapView.setCenter(selectedLocation, zoomLevel: 16, animated: false) // Set initial zoom level
         mapView.delegate = context.coordinator
         mapView.showsUserLocation = true
         mapView.userTrackingMode = .none
         mapView.automaticallyAdjustsContentInset = false
 
-        // Add the initial pin
+        // Add initial pin
         let annotation = MLNPointAnnotation()
         annotation.coordinate = selectedLocation
         mapView.addAnnotation(annotation)
 
+        // Listen for updates to center and zoom on the user's location
         NotificationCenter.default.addObserver(forName: .centerMapOnLocation, object: nil, queue: .main) { notification in
             if let location = notification.object as? CLLocationCoordinate2D {
-                // Always center the map, and update the pin if unlocked
                 mapView.setCenter(location, zoomLevel: 16, animated: true)
-                if !self.pinLocked {
-                    if let annotation = mapView.annotations?.first as? MLNPointAnnotation {
-                        annotation.coordinate = location
-                        self.selectedLocation = location
-                    }
-                }
             }
         }
 
